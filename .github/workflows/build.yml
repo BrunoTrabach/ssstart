@@ -17,13 +17,13 @@ jobs:
         with:
           gradle-version: 8.7
       - name: Build APK
-        run: gradle assembleRelease --no-daemon
+        run: gradle assembleDebug --no-daemon
       - name: Copy APK
         run: |
           mkdir -p release
-          cp app/build/outputs/apk/release/*.apk release/SSStart-v1.0.apk
+          cp app/build/outputs/apk/debug/app-debug.apk release/SSStart-v1.0.apk
       - name: Commit APK
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: "ci: adiciona APK v1.0"
+          commit_message: "ci: APK assinado debug v1.0"
           file_pattern: release/*.apk

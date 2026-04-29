@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">SSStart</string>
+    <string name="desc">Auto start for Android TV</string>
+    <string name="toggle">Enable Auto Start</string>
+    <string name="choose_app">Choose app to launch</string>
+    <string name="test_boot">Test now</string>
+</resources>

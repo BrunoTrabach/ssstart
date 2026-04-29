@@ -1,0 +1,2 @@
+rootProject.name = "SSStart"
+include ':app'

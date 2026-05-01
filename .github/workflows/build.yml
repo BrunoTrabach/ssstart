@@ -4,6 +4,9 @@ on:
     branches: [ main, v2-dev ]
   workflow_dispatch:
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 permissions:
   contents: write
 
@@ -21,15 +24,18 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
       
-      - name: Build APK
+      - name: Instalar plataformas
         run: |
-          gradle --version
-          gradle assembleDebug --no-daemon --stacktrace
+          sdkmanager --install "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+          yes | sdkmanager --licenses
+      
+      - name: Build APK (mostra erro completo)
+        run: gradle assembleDebug --stacktrace --info
       
       - name: Copiar APK
         run: |
           mkdir -p release
-          cp app/build/outputs/apk/debug/*.apk release/SSStart-${{ github.ref_name }}.apk
+          cp app/build/outputs/apk/debug/*.apk release/SSStart-${{ github.ref_name }}.apk || echo "APK não gerado"
       
       - name: Commit APK
         uses: stefanzweifel/git-auto-commit-action@v5

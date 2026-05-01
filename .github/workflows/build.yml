@@ -18,19 +18,20 @@ jobs:
           distribution: temurin
           java-version: '17'
       
-      - name: Build com Gradle 8.7 (sem wrapper)
-        uses: gradle/gradle-build-action@v3
-        with:
-          gradle-version: 8.7
-          arguments: assembleDebug
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
       
-      - name: Copiar APK para /release
+      - name: Build APK
+        run: |
+          gradle --version
+          gradle assembleDebug --no-daemon --stacktrace
+      
+      - name: Copiar APK
         run: |
           mkdir -p release
           cp app/build/outputs/apk/debug/*.apk release/SSStart-${{ github.ref_name }}.apk
-          ls -lh release/
       
-      - name: Commit APK no repo
+      - name: Commit APK
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: "ci: APK ${{ github.ref_name }} [skip ci]"

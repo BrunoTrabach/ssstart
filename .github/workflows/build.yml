@@ -12,16 +12,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
       
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
       
-      - uses: gradle/gradle-build-action@v3
+      - name: Build com Gradle 8.7 (sem wrapper)
+        uses: gradle/gradle-build-action@v3
         with:
+          gradle-version: 8.7
           arguments: assembleDebug
       
       - name: Copiar APK para /release

@@ -24,18 +24,21 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
       
-      - name: Instalar plataformas
+      - name: Instalar SDK 34
         run: |
-          sdkmanager --install "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+          sdkmanager --install "platforms;android-34" "build-tools;34.0.0"
           yes | sdkmanager --licenses
       
-      - name: Build APK (mostra erro completo)
-        run: gradle assembleDebug --stacktrace --info
+      - name: Build com Gradle 8.7
+        uses: gradle/gradle-build-action@v3
+        with:
+          gradle-version: 8.7
+          arguments: assembleDebug --stacktrace
       
       - name: Copiar APK
         run: |
           mkdir -p release
-          cp app/build/outputs/apk/debug/*.apk release/SSStart-${{ github.ref_name }}.apk || echo "APK não gerado"
+          cp app/build/outputs/apk/debug/*.apk release/SSStart-${{ github.ref_name }}.apk
       
       - name: Commit APK
         uses: stefanzweifel/git-auto-commit-action@v5

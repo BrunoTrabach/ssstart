@@ -3,82 +3,67 @@ package com.aiwa.ssstart
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
+import android.provider.Settings
 import android.view.KeyEvent
 
 class TvActivity : Activity() {
     
-    private lateinit var tvInputDetector: TvInputDetector
+    private lateinit var inputDetector: TvInputDetector
     private lateinit var inactivityMonitor: InactivityMonitor
-    
-    // Código secreto: CIMA, CIMA, BAIXO, BAIXO, OK
-    private val secretSequence = listOf(
-        KeyEvent.KEYCODE_DPAD_UP,
-        KeyEvent.KEYCODE_DPAD_UP,
-        KeyEvent.KEYCODE_DPAD_DOWN,
-        KeyEvent.KEYCODE_DPAD_DOWN,
-        KeyEvent.KEYCODE_DPAD_CENTER // OK/Enter
-    )
-    private val inputSequence = mutableListOf<Int>()
-    
+    private val keySequence = mutableListOf<Int>()
+    private val secretSequence = listOf(KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_DPAD_UP, 
+                                       KeyEvent.KEYCODE_DPAD_DOWN, KeyEvent.KEYCODE_DPAD_DOWN, 
+                                       KeyEvent.KEYCODE_DPAD_CENTER)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Log.d("SSStart", "TvActivity iniciada na TV")
         
-        tvInputDetector = TvInputDetector(this)
-        
-        inactivityMonitor = InactivityMonitor(onTimeout = {
-            enterPowerSaveMode()
-        })
-        
-        if (!tvInputDetector.hasSignal()) {
-            inactivityMonitor.start()
-        }
-        
-        tvInputDetector.startMonitoring(
-            onSignalLost = { inactivityMonitor.start() },
-            onSignalFound = { inactivityMonitor.reset() }
+        inputDetector = TvInputDetector(this)
+        inactivityMonitor = InactivityMonitor(
+            onTimeout = { enterPowerSaveMode() },
+            onActivityDetected = { openTvApp() }
         )
         
-        openTvApp()
+        if (inputDetector.hasSignal()) {
+            openTvApp()
+        } else {
+            inactivityMonitor.start()
+            inputDetector.startMonitoring(
+                onSignalLost = { inactivityMonitor.start() },
+                onSignalFound = { inactivityMonitor.stop(); openTvApp() }
+            )
+        }
+    }
+
+    private fun openTvApp() {
+        val intent = packageManager.getLaunchIntentForPackage("com.google.android.tv")
+            ?: packageManager.getLaunchIntentForPackage("com.android.tv")
+        intent?.let { startActivity(it) }
         finish()
     }
-    
-    private fun openTvApp() {
-        val tvIntent = packageManager.getLaunchIntentForPackage("com.google.android.tv")
-            ?: packageManager.getLaunchIntentForPackage("com.android.tv")
-        tvIntent?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        startActivity(tvIntent)
-    }
-    
+
     private fun enterPowerSaveMode() {
-        Log.d("SSStart", "Entrando em modo economia")
-        tvInputDetector.switchToHdmi2()
-        // TODO: desligar backlight via Settings.System ou intent Aiwa
+        // 1. Tenta HDMI2 via Shizuku
+        ShizukuHelper.runShellCommand("am start -a android.intent.action.VIEW -d hdmi://2")
+        // 2. Backlight off via Shizuku  
+        ShizukuHelper.runShellCommand("settings put system screen_brightness 0")
     }
-    
+
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
-        // Código secreto D-pad: ↑ ↓ ↓ OK
-        inputSequence.add(keyCode)
-        
-        // Mantém só os últimos 5 cliques
-        if (inputSequence.size > secretSequence.size) {
-            inputSequence.removeAt(0)
-        }
-        
-        if (inputSequence == secretSequence) {
-            Log.d("SSStart", "Código secreto acionado - abrindo Settings")
-            inputSequence.clear()
-            startActivity(Intent(android.provider.Settings.ACTION_SETTINGS))
+        keySequence.add(keyCode)
+        if (keySequence.size > 5) keySequence.removeAt(0)
+        if (keySequence == secretSequence) {
+            startActivity(Intent(Settings.ACTION_SETTINGS))
+            keySequence.clear()
             return true
         }
-        
+        inactivityMonitor.reset()
         return super.onKeyDown(keyCode, event)
     }
-    
+
     override fun onDestroy() {
         super.onDestroy()
-        tvInputDetector.stopMonitoring()
+        inputDetector.stopMonitoring()
         inactivityMonitor.stop()
     }
 }

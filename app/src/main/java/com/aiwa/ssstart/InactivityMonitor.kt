@@ -2,31 +2,30 @@ package com.aiwa.ssstart
 
 import android.os.Handler
 import android.os.Looper
-import android.util.Log
 
 class InactivityMonitor(
-    private val timeoutMs: Long = 30 * 60 * 1000L, // 30 min
-    private val onTimeout: () -> Unit
+    private val onTimeout: () -> Unit,
+    private val onActivityDetected: () -> Unit,
+    private val timeoutMs: Long = 30 * 60 * 1000L // 30min
 ) {
     private val handler = Handler(Looper.getMainLooper())
-    private val timeoutRunnable = Runnable {
-        Log.d("Inactivity", "30min sem sinal - acionando modo economia")
-        onTimeout()
-    }
+    private val timeoutRunnable = Runnable { onTimeout() }
+    private var isRunning = false
 
     fun start() {
-        stop() // garante que não tem 2 rodando
-        handler.postDelayed(timeoutRunnable, timeoutMs)
-        Log.d("Inactivity", "Monitor iniciado: ${timeoutMs}ms")
+        if (isRunning) return
+        isRunning = true
+        reset()
     }
 
     fun reset() {
-        Log.d("Inactivity", "Sinal voltou - resetando timer")
-        start()
+        handler.removeCallbacks(timeoutRunnable)
+        if (isRunning) handler.postDelayed(timeoutRunnable, timeoutMs)
+        onActivityDetected()
     }
 
     fun stop() {
+        isRunning = false
         handler.removeCallbacks(timeoutRunnable)
-        Log.d("Inactivity", "Monitor parado")
     }
 }

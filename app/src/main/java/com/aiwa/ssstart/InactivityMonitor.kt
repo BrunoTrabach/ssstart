@@ -1,17 +1,32 @@
 package com.aiwa.ssstart
-import android.content.Context
-import android.media.AudioManager
-import android.media.session.MediaController
-import android.media.session.MediaSessionManager
 
-class InactivityMonitor(private val ctx: Context) {
-    fun shouldPlayDemo(): Boolean {
-        val am = ctx.getSystemService(Context.AUDIO_SERVICE) as AudioManager
-        if (am.isMusicActive) return false // vídeo com áudio
-        val msm = ctx.getSystemService(Context.MEDIA_SESSION_SERVICE) as MediaSessionManager
-        val playing = msm.getActiveSessions(null).any { it.playbackState?.isActive == true }
-        if (playing) return false // VLC/Pluto mesmo mudo
-        // TODO: checar HDMI via TvInputManager
-        return true
+import android.os.Handler
+import android.os.Looper
+import android.util.Log
+
+class InactivityMonitor(
+    private val timeoutMs: Long = 30 * 60 * 1000L, // 30 min
+    private val onTimeout: () -> Unit
+) {
+    private val handler = Handler(Looper.getMainLooper())
+    private val timeoutRunnable = Runnable {
+        Log.d("Inactivity", "30min sem sinal - acionando modo economia")
+        onTimeout()
+    }
+
+    fun start() {
+        stop() // garante que não tem 2 rodando
+        handler.postDelayed(timeoutRunnable, timeoutMs)
+        Log.d("Inactivity", "Monitor iniciado: ${timeoutMs}ms")
+    }
+
+    fun reset() {
+        Log.d("Inactivity", "Sinal voltou - resetando timer")
+        start()
+    }
+
+    fun stop() {
+        handler.removeCallbacks(timeoutRunnable)
+        Log.d("Inactivity", "Monitor parado")
     }
 }

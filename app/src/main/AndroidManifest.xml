@@ -11,7 +11,7 @@
     <application
         android:allowBackup="false"
         android:label="@string/app_name"
-        android:theme="@style/Theme.Material.Light.NoActionBar.Fullscreen">
+        android:theme="@android:style/Theme.DeviceDefault.NoActionBar">
 
         <activity android:name=".TvActivity"
             android:exported="true"
@@ -23,9 +23,7 @@
             </intent-filter>
         </activity>
 
-        <receiver android:name=".BootReceiver" 
-            android:exported="true"
-            android:enabled="true">
+        <receiver android:name=".BootReceiver" android:exported="true">
             <intent-filter android:priority="1000">
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
@@ -38,7 +36,6 @@
                 android:resource="@xml/device_admin" />
             <intent-filter>
                 <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
-                <action android:name="android.app.action.DEVICE_ADMIN_DISABLED" />
             </intent-filter>
         </receiver>
 
@@ -46,6 +43,5 @@
             android:authorities="${applicationId}.shizuku"
             android:exported="false"
             android:process=":shizuku" />
-
     </application>
 </manifest>

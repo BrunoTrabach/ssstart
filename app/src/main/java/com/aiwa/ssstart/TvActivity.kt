@@ -10,8 +10,16 @@ class TvActivity : Activity() {
     
     private lateinit var tvInputDetector: TvInputDetector
     private lateinit var inactivityMonitor: InactivityMonitor
-    private var secretCode = ""
-    private val targetCode = "5858"
+    
+    // Código secreto: CIMA, CIMA, BAIXO, BAIXO, OK
+    private val secretSequence = listOf(
+        KeyEvent.KEYCODE_DPAD_UP,
+        KeyEvent.KEYCODE_DPAD_UP,
+        KeyEvent.KEYCODE_DPAD_DOWN,
+        KeyEvent.KEYCODE_DPAD_DOWN,
+        KeyEvent.KEYCODE_DPAD_CENTER // OK/Enter
+    )
+    private val inputSequence = mutableListOf<Int>()
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -19,7 +27,6 @@ class TvActivity : Activity() {
         
         tvInputDetector = TvInputDetector(this)
         
-        // Se HDMI1 não tem sinal, já inicia o monitor de 30min
         inactivityMonitor = InactivityMonitor(onTimeout = {
             enterPowerSaveMode()
         })
@@ -28,15 +35,13 @@ class TvActivity : Activity() {
             inactivityMonitor.start()
         }
         
-        // Ouve mudanças no HDMI1
         tvInputDetector.startMonitoring(
             onSignalLost = { inactivityMonitor.start() },
             onSignalFound = { inactivityMonitor.reset() }
         )
         
-        // Tenta abrir app da TV/Antena
         openTvApp()
-        finish() // fecha a activity, só roda em background
+        finish()
     }
     
     private fun openTvApp() {
@@ -53,20 +58,21 @@ class TvActivity : Activity() {
     }
     
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
-        // Código secreto 5858 abre Settings
-        when (keyCode) {
-            KeyEvent.KEYCODE_5 -> secretCode += "5"
-            KeyEvent.KEYCODE_8 -> secretCode += "8"
-            else -> secretCode = ""
+        // Código secreto D-pad: ↑ ↓ ↓ OK
+        inputSequence.add(keyCode)
+        
+        // Mantém só os últimos 5 cliques
+        if (inputSequence.size > secretSequence.size) {
+            inputSequence.removeAt(0)
         }
         
-        if (secretCode.contains(targetCode)) {
-            secretCode = ""
+        if (inputSequence == secretSequence) {
+            Log.d("SSStart", "Código secreto acionado - abrindo Settings")
+            inputSequence.clear()
             startActivity(Intent(android.provider.Settings.ACTION_SETTINGS))
             return true
         }
         
-        if (secretCode.length > 4) secretCode = secretCode.takeLast(4)
         return super.onKeyDown(keyCode, event)
     }
     

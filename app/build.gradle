@@ -1,14 +1,21 @@
-plugins { id 'com.android.application'; id 'org.jetbrains.kotlin.android' }
+plugins { id 'com.android.application'; id 'org.jetbrains.kotlin.android' version '1.9.22' }
 
 android {
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    kotlinOptions {
+        jvmTarget = "17"
+    }
     namespace 'com.aiwa.ssstart'
     compileSdk 34
     defaultConfig {
         applicationId "com.aiwa.ssstart"
-        minSdk 21
+        minSdk 24
         targetSdk 33
-        versionCode 1
-        versionName "1.0"
+        versionCode 13
+        versionName "2.0.12"
     }
     buildTypes { release { minifyEnabled false } }
 }

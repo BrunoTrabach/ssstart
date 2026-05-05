@@ -17,7 +17,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-java@v4
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
@@ -30,10 +31,11 @@ jobs:
           sdkmanager --install "platforms;android-34" "build-tools;34.0.0"
           yes | sdkmanager --licenses
 
-      - name: Build com wrapper
-        run: |
-          chmod +x gradlew
-          ./gradlew assembleDebug --stacktrace
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Build APK
+        run: gradle assembleDebug --stacktrace
 
       - name: Copiar APK
         run: |
@@ -53,13 +55,13 @@ jobs:
 
       - name: Atualiza version.json
         run: |
-          rclone copy gdrive-synapseshade:SSStart-TV-Updates/v2-dev/version.json . || echo '{"versionCode":4}' > version.json
+          rclone copy gdrive-synapseshade:SSStart-TV-Updates/v2-dev/version.json . || echo '{"versionCode":0}' > version.json
           CODE=$(jq .versionCode version.json)
           NEW=$((CODE+1))
-          jq --argjson n $NEW '.versionCode=$n | .versionName="2.0-dev.\($n)" | .changelog="Auto build \($n) - '"$(date +%d/%m/%Y)"'"' version.json > v.json
+          jq --argjson n $NEW '.versionCode=$n | .versionName="2.0-dev.\($n)" | .apkUrl="https://drive.google.com/uc?export=download&id=1cxPmw28BQqLbvJl7nagnO0DaVhiny3ox" | .changelog="Auto build \($n) - '"$(date +%d/%m/%Y)"'"' version.json > v.json
           mv v.json version.json
           cat version.json
-          rclone copy version.json gdrive-synapseshade:SSStart-TV-Updates/v2-dev/ -P
+          rclone copy version.json gdrive-synapseshade:SSStart-TV-Updates/v2-dev/
 
       - name: Commit APK (sem skip)
         uses: stefanzweifel/git-auto-commit-action@v5

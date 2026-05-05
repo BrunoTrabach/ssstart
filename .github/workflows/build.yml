@@ -30,11 +30,10 @@ jobs:
           sdkmanager --install "platforms;android-34" "build-tools;34.0.0"
           yes | sdkmanager --licenses
 
-      - name: Build com Gradle 8.7
-        uses: gradle/actions/setup-gradle@v3
-        with:
-          gradle-version: 8.7
-      - run: gradle assembleDebug --stacktrace
+      - name: Build com wrapper
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --stacktrace
 
       - name: Copiar APK
         run: |

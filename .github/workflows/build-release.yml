@@ -1,0 +1,43 @@
+name: Build and Release TV
+
+on:
+  push:
+    branches: [ v2-dev ]
+    tags: [ 'v*' ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      
+    - name: Setup JDK 17
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+        
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v3
+      
+    - name: Build Debug APK
+      run: ./gradlew assembleDebug
+      
+    - name: Rename APK
+      run: mv app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/SSStart-TV-debug.apk
+      
+    - name: Create/Update Release
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: v2-dev-latest
+        name: SSStart-TV Dev Build
+        files: app/build/outputs/apk/debug/SSStart-TV-debug.apk
+        prerelease: true
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
